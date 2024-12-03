@@ -1,4 +1,4 @@
-defmodule AiChat.Anthropic.Claudi do
+defmodule AiChat.Anthropic.Claude do
   @moduledoc """
    Will contain langchain claudi logic
   """
@@ -9,6 +9,7 @@ defmodule AiChat.Anthropic.Claudi do
   def create(message, chain \\ nil)
 
   def create(message, nil) do
+    IO.inspect(message, label: "model")
     create(
       message,
       LLMChain.new!(%{llm: ChatAnthropic.new!(%{model: "claude-3-5-sonnet-20241022"})})

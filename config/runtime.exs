@@ -20,6 +20,8 @@ if System.get_env("PHX_SERVER") do
   config :ai_chat, AiChatWeb.Endpoint, server: true
 end
 
+config :langchain, :anthropic_key, System.fetch_env!("ANTHROPIC_API_KEY")
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
@@ -52,8 +54,6 @@ if config_env() == :prod do
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :ai_chat, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
-
-  config :langchain, :anthropic_key, System.fetch_env!("ANTHROPIC_API_KEY")
 
   config :ai_chat, AiChatWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

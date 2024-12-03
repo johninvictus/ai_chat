@@ -37,6 +37,7 @@ defmodule AiChat.MixProject do
       {:ecto_sql, "~> 3.10"},
       {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 4.0"},
+      {:phoenix_html_helpers, "~> 1.0.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.20.2"},
       {:floki, ">= 0.30.0", only: :test},
@@ -58,7 +59,8 @@ defmodule AiChat.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
-      {:langchain, "0.3.0-rc.0"}
+      {:langchain, "0.3.0-rc.0"},
+      {:mdex, "~> 0.2"}
     ]
   end
 

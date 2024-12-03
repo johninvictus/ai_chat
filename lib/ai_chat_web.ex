@@ -83,6 +83,8 @@ defmodule AiChatWeb do
     quote do
       # HTML escaping functionality
       import Phoenix.HTML
+      import Phoenix.HTML.Form
+      use PhoenixHTMLHelpers
       # Core UI components and translation
       import AiChatWeb.CoreComponents
       import AiChatWeb.Gettext
