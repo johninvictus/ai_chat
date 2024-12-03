@@ -19,8 +19,8 @@ defmodule AiChatWeb.ChatLive do
   def render(assigns) do
     ~H"""
     <div class="bg-slate-50 h-screen flex flex-col">
-      <section class="grow" id="messages" phx-update="stream">
-        <div class="overflow-y-auto">
+      <section class="flex-1 overflow-hidden" id="messages-section">
+        <div class="h-full overflow-y-auto" id="messages-stream" phx-update="stream">
           <div
             :for={{dom_id, message} <- @streams.messages}
             class="bg-white m-2 p-4 rounded-sm shadow-sm"
@@ -31,16 +31,24 @@ defmodule AiChatWeb.ChatLive do
         </div>
       </section>
 
-      <.simple_form for={@form} id="form" phx-change="validate" phx-submit="submit_chat" class="px-6">
-        <div class="flex gap-2 px-3 py-2">
-          <div class="flex-1">
-            <.input field={@form[:message]} type="text" placeholder="write something ..." />
+      <div class="sticky bottom-0 bg-slate-50 border-t border-slate-200">
+        <.simple_form
+          for={@form}
+          id="form"
+          phx-change="validate"
+          phx-submit="submit_chat"
+          class="px-6"
+        >
+          <div class="flex gap-2 px-3 py-2">
+            <div class="flex-1">
+              <.input field={@form[:message]} type="text" placeholder="write something ..." />
+            </div>
+            <button class="h-full px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-2">
+              Send
+            </button>
           </div>
-          <button class="h-full px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-2">
-            Send
-          </button>
-        </div>
-      </.simple_form>
+        </.simple_form>
+      </div>
     </div>
     """
   end
@@ -57,7 +65,7 @@ defmodule AiChatWeb.ChatLive do
 
     socket =
       socket
-      |> stream_insert(:messages, %{id:  System.unique_integer([:positive]), content: message})
+      |> stream_insert(:messages, %{id: System.unique_integer([:positive]), content: message})
       |> start_async("send_message", fn ->
         Claude.create(message, chain)
       end)
@@ -67,6 +75,8 @@ defmodule AiChatWeb.ChatLive do
 
   @impl Phoenix.LiveView
   def handle_async("send_message", {:ok, {:ok, updated_chain, response}}, socket) do
+    IO.inspect(response)
+
     socket =
       socket
       |> assign(:chain, updated_chain)
