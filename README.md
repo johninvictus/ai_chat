@@ -1,5 +1,13 @@
 # AiChat
 
+- create your own Anthropic api key and export it
+```SHELL
+export ANTHROPIC_API_KEY=""
+```
+
+![Demo image](llm.png "Demo image")
+
+
 To start your Phoenix server:
 
   * Run `mix setup` to install and setup dependencies
