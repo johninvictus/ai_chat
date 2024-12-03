@@ -6,17 +6,25 @@ defmodule AiChat.Anthropic.Claude do
   alias LangChain.ChatModels.ChatAnthropic
   alias LangChain.Message
 
-  def create(message, chain \\ nil)
+  def create(message, callback, chain \\ nil)
 
-  def create(message, nil) do
-    IO.inspect(message, label: "model")
+  def create(message, callback, nil) do
     create(
       message,
-      LLMChain.new!(%{llm: ChatAnthropic.new!(%{model: "claude-3-5-sonnet-20241022"})})
+      callback,
+      LLMChain.new!(%{
+        llm:
+          ChatAnthropic.new!(%{
+            model: "claude-3-5-sonnet-20241022",
+            stream: true,
+            callbacks: [callback]
+          }),
+        callbacks: [callback]
+      })
     )
   end
 
-  def create(message, chain) do
+  def create(message, _callback, chain) do
     chain
     |> LLMChain.add_message(Message.new_user!(message))
     |> LLMChain.run()

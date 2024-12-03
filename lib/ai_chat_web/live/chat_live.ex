@@ -12,6 +12,8 @@ defmodule AiChatWeb.ChatLive do
       |> assign(:chain, nil)
       |> stream(:messages, [])
       |> assign(:loading, false)
+      |> assign(:stream_data, "")
+      |> assign(:unique_index, System.unique_integer([:positive]))
 
     {:ok, socket}
   end
@@ -64,6 +66,7 @@ defmodule AiChatWeb.ChatLive do
   @impl Phoenix.LiveView
   def handle_event("submit_chat", %{"chat_form" => %{"message" => message} = data}, socket) do
     chain = socket.assigns.chain
+    liveview_process = self()
 
     changeset = ChatForm.changeset(%ChatForm{}, data)
 
@@ -73,8 +76,10 @@ defmodule AiChatWeb.ChatLive do
         |> stream_insert(:messages, %{id: System.unique_integer([:positive]), content: message})
         |> assign(form: to_form(ChatForm.changeset(%ChatForm{}, %{})))
         |> assign(:loading, true)
+        |> assign(:stream_data, "")
+        |> assign(:unique_index, System.unique_integer([:positive]))
         |> start_async("send_message", fn ->
-          Claude.create(message, chain)
+          Claude.create(message, streaming_callback(liveview_process), chain)
         end)
 
       {:noreply, socket}
@@ -89,10 +94,6 @@ defmodule AiChatWeb.ChatLive do
       socket
       |> assign(:chain, updated_chain)
       |> assign(:loading, false)
-      |> stream_insert(:messages, %{
-        id: System.unique_integer([:positive]),
-        content: response.content
-      })
 
     {:noreply, socket}
   end
@@ -106,5 +107,33 @@ defmodule AiChatWeb.ChatLive do
       |> put_flash(:error, "An error occurred try again")
 
     {:noreply, socket}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:streaming_response, message}, socket) do
+    content = socket.assigns.stream_data <> message
+
+    socket =
+      socket
+      |> stream_insert(:messages, %{
+        id: socket.assigns.unique_index,
+        content: content
+      })
+      |> assign(:stream_data, content)
+
+    {:noreply, socket}
+  end
+
+  defp streaming_callback(liveview_process) do
+    %{
+      on_llm_new_delta: fn _model, %LangChain.MessageDelta{} = data ->
+        # we received a piece of data
+        send(liveview_process, {:streaming_response, data.content})
+      end,
+      on_message_processed: fn _chain, %LangChain.Message{} = data ->
+        # the message was assmebled and is processed
+       :ok
+      end
+    }
   end
 end
