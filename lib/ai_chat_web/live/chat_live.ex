@@ -89,7 +89,7 @@ defmodule AiChatWeb.ChatLive do
   end
 
   @impl Phoenix.LiveView
-  def handle_async("send_message", {:ok, {:ok, updated_chain, response}}, socket) do
+  def handle_async("send_message", {:ok, {:ok, updated_chain, _response}}, socket) do
     socket =
       socket
       |> assign(:chain, updated_chain)
@@ -130,7 +130,7 @@ defmodule AiChatWeb.ChatLive do
         # we received a piece of data
         send(liveview_process, {:streaming_response, data.content})
       end,
-      on_message_processed: fn _chain, %LangChain.Message{} = data ->
+      on_message_processed: fn _chain, %LangChain.Message{} ->
         # the message was assmebled and is processed
        :ok
       end
