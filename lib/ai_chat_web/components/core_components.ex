@@ -673,4 +673,18 @@ defmodule AiChatWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  attr :show, :boolean, default: false
+  attr :size, :string, default: "w-8 h-8"
+
+  def spinner(assigns) do
+    ~H"""
+    <div :if={@show} class="flex">
+      <span class="mr-4">Loading...</span>
+      <div class={"animate-spin rounded-full border-4 border-slate-200 border-t-blue-600 #{@size}"}>
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+    """
+  end
 end

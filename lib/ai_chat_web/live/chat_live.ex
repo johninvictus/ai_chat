@@ -11,6 +11,7 @@ defmodule AiChatWeb.ChatLive do
       |> assign(form: to_form(ChatForm.changeset(%ChatForm{}, %{})))
       |> assign(:chain, nil)
       |> stream(:messages, [])
+      |> assign(:loading, false)
 
     {:ok, socket}
   end
@@ -37,9 +38,10 @@ defmodule AiChatWeb.ChatLive do
           id="form"
           phx-change="validate"
           phx-submit="submit_chat"
-          class="px-6"
+          class="px-6  py-2"
         >
-          <div class="flex gap-2 px-3 py-2">
+          <.spinner show={@loading} size="w-6 h-6" />
+          <div class="flex gap-2 px-3">
             <div class="flex-1">
               <.input field={@form[:message]} type="text" placeholder="write something ..." />
             </div>
@@ -60,30 +62,48 @@ defmodule AiChatWeb.ChatLive do
   end
 
   @impl Phoenix.LiveView
-  def handle_event("submit_chat", %{"chat_form" => %{"message" => message}}, socket) do
+  def handle_event("submit_chat", %{"chat_form" => %{"message" => message} = data}, socket) do
     chain = socket.assigns.chain
 
+    changeset = ChatForm.changeset(%ChatForm{}, data)
+
+    if changeset.valid? do
+      socket =
+        socket
+        |> stream_insert(:messages, %{id: System.unique_integer([:positive]), content: message})
+        |> assign(form: to_form(ChatForm.changeset(%ChatForm{}, %{})))
+        |> assign(:loading, true)
+        |> start_async("send_message", fn ->
+          Claude.create(message, chain)
+        end)
+
+      {:noreply, socket}
+    else
+      {:noreply, assign(socket, form: to_form(changeset, action: :insert))}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_async("send_message", {:ok, {:ok, updated_chain, response}}, socket) do
     socket =
       socket
-      |> stream_insert(:messages, %{id: System.unique_integer([:positive]), content: message})
-      |> start_async("send_message", fn ->
-        Claude.create(message, chain)
-      end)
+      |> assign(:chain, updated_chain)
+      |> assign(:loading, false)
+      |> stream_insert(:messages, %{
+        id: System.unique_integer([:positive]),
+        content: response.content
+      })
 
     {:noreply, socket}
   end
 
   @impl Phoenix.LiveView
-  def handle_async("send_message", {:ok, {:ok, updated_chain, response}}, socket) do
-    IO.inspect(response)
-
+  def handle_async("send_message", _response, socket) do
+    # a lazy error handling
     socket =
       socket
-      |> assign(:chain, updated_chain)
-      |> stream_insert(:messages, %{
-        id: System.unique_integer([:positive]),
-        content: response.content
-      })
+      |> assign(:loading, false)
+      |> put_flash(:error, "An error occurred try again")
 
     {:noreply, socket}
   end
