@@ -53,6 +53,8 @@ if config_env() == :prod do
 
   config :ai_chat, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  config :langchain, :anthropic_key, System.fetch_env!("ANTHROPIC_API_KEY")
+
   config :ai_chat, AiChatWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [

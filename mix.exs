@@ -57,7 +57,8 @@ defmodule AiChat.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.2"}
+      {:bandit, "~> 1.2"},
+      {:langchain, "0.3.0-rc.0"}
     ]
   end
 
